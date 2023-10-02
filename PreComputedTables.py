@@ -7,11 +7,18 @@ class PreComputedTables:
         self.pawnAttackTable = {WHITE: [uint64(0)] * 64, BLACK: [uint64(0)] * 64}
         self.pawnPushTable = {WHITE: [uint64(0)] * 64, BLACK: [uint64(0)] * 64}
         self.kingAttackTable = [uint64(0)] * 64
+        self.bishopMovementMask = [uint64(0)] * 64
+        self.rookMovementMask = [uint64(0)] * 64
+        self.queenMovementMask = [uint64(0)] * 64
 
         self.computeKnightAttackTable()
         self.computePawnAttackTable()
         self.computePawnPushTable()
         self.computeKingAttackTable()
+
+        self.computeBishopMovementMasks()
+        self.computeRookMovementMasks()
+        self.computeQueenMovementMasks()
 
     def computeKnightAttackTable(self) -> None:
         for i in range(64):
@@ -62,3 +69,37 @@ class PreComputedTables:
             ]:
                 moves = moves | directionFunction(bitBoard)
             self.kingAttackTable[i] = moves
+
+    def computeBishopMovementMasks(self) -> None:
+        for i in range(64):
+            bitBoard = setBit(uint64(0), i)
+            finalMoves = uint64(0)
+            for directionFunction in [northwest, northeast, southwest, southeast]:
+                moveBitBoard = directionFunction(bitBoard)
+                while True:
+                    newMoveBitBoard = moveBitBoard | directionFunction(moveBitBoard)
+                    if newMoveBitBoard == moveBitBoard:
+                        break
+                    moveBitBoard = newMoveBitBoard
+                finalMoves = finalMoves | moveBitBoard
+            self.bishopMovementMask[i] = finalMoves
+
+    def computeRookMovementMasks(self) -> None:
+        for i in range(64):
+            bitBoard = setBit(uint64(0), i)
+            finalMoves = uint64(0)
+            for directionFunction in [north, south, west, east]:
+                moveBitBoard = directionFunction(bitBoard)
+                while True:
+                    newMoveBitBoard = moveBitBoard | directionFunction(moveBitBoard)
+                    if newMoveBitBoard == moveBitBoard:
+                        break
+                    moveBitBoard = newMoveBitBoard
+                finalMoves = finalMoves | moveBitBoard
+            self.rookMovementMask[i] = finalMoves
+
+    def computeQueenMovementMasks(self) -> None:
+        for i in range(64):
+            self.queenMovementMask[i] = (
+                self.bishopMovementMask[i] | self.rookMovementMask[i]
+            )

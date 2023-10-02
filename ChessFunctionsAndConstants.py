@@ -129,4 +129,4 @@ def northeast(bitBoard: uint64) -> uint64:
 
 
 def southeast(bitboard: uint64) -> uint64:
-    return (bitboard & ~FILE_GH & ~RANKS[0]) >> uint64(9)
+    return (bitboard & ~FILE_H & ~RANKS[0]) >> uint64(9)
