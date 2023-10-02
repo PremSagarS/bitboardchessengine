@@ -54,9 +54,13 @@ def printBitBoard(bitboard: uint64) -> None:
 
     a = format(bitboard, "#066b")
     for i in range(2, 66):
-        print(a[i], end="")
+        if (i - 2) % 8 == 0:
+            print(8 - ((i - 2) // 8), end="  ")
+        print(a[i], end=" ")
         if ((i - 2) % 8) == 7:
             print("")
+    print("")
+    print("   a b c d e f g h")
 
 
 RANK_1 = 0x00000000000000FF
@@ -70,6 +74,10 @@ def rankNameToRankIndex(rank: str) -> int:
     return int(rank) - 1
 
 
+def rankIndexToRankName(rank: int) -> str:
+    return str(rank + 1)
+
+
 FILE_A = uint64(0x8080808080808080)
 FILES = [uint64(FILE_A >> uint64(1 * i)) for i in range(8)]
 FILE_H = FILES[7]
@@ -79,6 +87,10 @@ FILE_AB = FILES[0] | FILES[1]
 
 def fileNameToFileIndex(file: str) -> int:
     return ord(file) - 97
+
+
+def fileIndexTofileName(file: int) -> str:
+    return chr(file + 97)
 
 
 def squareNameToIndex(squareName: str) -> int:
@@ -92,6 +104,7 @@ def squareNameToIndex(squareName: str) -> int:
     return (rankIndex - 7) * 8 + fileIndex
 
 
+# bit board operations
 def setBit(bitboard: uint64, index: int) -> uint64:
     return bitboard | uint64(1) << uint64(63 - index)
 
@@ -100,6 +113,11 @@ def clearBit(bitboard: uint64, index: int) -> uint64:
     return bitboard & ~(uint64(1) << uint64(63 - index))
 
 
+def getBit(bitboard: uint64, index: int) -> uint64:
+    return bitboard & (uint64 << (63 - index))
+
+
+# direction functions
 def north(bitboard: uint64) -> uint64:
     return (bitboard & ~RANKS[7]) << uint64(8)
 

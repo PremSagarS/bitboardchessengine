@@ -19,14 +19,15 @@ class Board:
         self.setToFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
     def printBoard(self) -> None:
-        print("-" * 17)
+        print("  " + ("-" * 33))
         for i in range(64):
             if i % 8 == 0:
-                print("|", end="")
-            print(pieceToCharacter(self.board[i]) + "|", end="")
+                print(f"{8 - (i // 8)} | ", end="")
+            print(pieceToCharacter(self.board[i]) + " | ", end="")
             if i % 8 == 7:
                 print("")
-                print("-" * 17)
+                print("  " + ("-" * 33))
+        print("    a   b   c   d   e   f   g   h")
 
     def setToFen(self, fen: str) -> None:
         # get info from FEN
