@@ -119,32 +119,32 @@ def getBit(bitboard: uint64, index: int) -> uint64:
 
 # direction functions
 def north(bitboard: uint64) -> uint64:
-    return (bitboard & ~RANKS[7]) << uint64(8)
+    return (bitboard) << uint64(8)
 
 
 def south(bitboard: uint64) -> uint64:
-    return (bitboard & ~RANKS[0]) >> uint64(8)
+    return (bitboard) >> uint64(8)
 
 
 def west(bitboard: uint64) -> uint64:
-    return (bitboard & ~FILES[0]) << uint64(1)
+    return (bitboard & ~FILE_A) << uint64(1)
 
 
 def east(bitboard: uint64) -> uint64:
-    return (bitboard & ~FILES[7]) >> uint64(1)
+    return (bitboard & ~FILE_H) >> uint64(1)
 
 
 def northwest(bitBoard: uint64) -> uint64:
-    return (bitBoard & ~FILE_A & ~RANKS[7]) << uint64(9)
+    return (bitBoard & ~FILE_A) << uint64(9)
 
 
 def southwest(bitBoard: uint64) -> uint64:
-    return (bitBoard & ~FILE_A & ~RANKS[0]) >> uint64(7)
+    return (bitBoard & ~FILE_A) >> uint64(7)
 
 
 def northeast(bitBoard: uint64) -> uint64:
-    return (bitBoard & ~FILE_H & ~RANKS[7]) << uint64(7)
+    return (bitBoard & ~FILE_H) << uint64(7)
 
 
 def southeast(bitboard: uint64) -> uint64:
-    return (bitboard & ~FILE_H & ~RANKS[0]) >> uint64(9)
+    return (bitboard & ~FILE_H) >> uint64(9)
