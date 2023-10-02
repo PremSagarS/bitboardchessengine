@@ -98,3 +98,35 @@ def setBit(bitboard: uint64, index: int) -> uint64:
 
 def clearBit(bitboard: uint64, index: int) -> uint64:
     return bitboard & ~(uint64(1) << uint64(63 - index))
+
+
+def north(bitboard: uint64) -> uint64:
+    return (bitboard & ~RANKS[7]) << uint64(8)
+
+
+def south(bitboard: uint64) -> uint64:
+    return (bitboard & ~RANKS[0]) >> uint64(8)
+
+
+def west(bitboard: uint64) -> uint64:
+    return (bitboard & ~FILES[0]) << uint64(1)
+
+
+def east(bitboard: uint64) -> uint64:
+    return (bitboard & ~FILES[7]) >> uint64(1)
+
+
+def northwest(bitBoard: uint64) -> uint64:
+    return (bitBoard & ~FILE_A & ~RANKS[7]) << uint64(9)
+
+
+def southwest(bitBoard: uint64) -> uint64:
+    return (bitBoard & ~FILE_A & ~RANKS[0]) >> uint64(7)
+
+
+def northeast(bitBoard: uint64) -> uint64:
+    return (bitBoard & ~FILE_H & ~RANKS[7]) << uint64(7)
+
+
+def southeast(bitboard: uint64) -> uint64:
+    return (bitboard & ~FILE_GH & ~RANKS[0]) >> uint64(9)

@@ -27,40 +27,38 @@ class PreComputedTables:
     def computePawnAttackTable(self) -> None:
         for i in range(8, 56):
             bitBoard = setBit(uint64(0), i)
-            attacks = ((bitBoard & ~FILE_A) << uint64(9)) | (
-                (bitBoard & ~FILE_H) << uint64(7)
-            )
+            attacks = northeast(bitBoard) | northwest(bitBoard)
             self.pawnAttackTable[WHITE][i] = attacks
 
         for i in range(8, 56):
             bitBoard = setBit(uint64(0), i)
-            attacks = ((bitBoard & ~FILE_A) >> uint64(7)) | (
-                (bitBoard & ~FILE_H) >> uint64(9)
-            )
+            attacks = southeast(bitBoard) | southwest(bitBoard)
             self.pawnAttackTable[BLACK][i] = attacks
 
     def computePawnPushTable(self) -> None:
         for i in range(8, 56):
             bitBoard = setBit(uint64(0), i)
-            pushes = bitBoard << uint64(8)
+            pushes = north(bitBoard)
             self.pawnPushTable[WHITE][i] = pushes
 
         for i in range(8, 56):
             bitBoard = setBit(uint64(0), i)
-            pushes = bitBoard >> uint64(8)
+            pushes = south(bitBoard)
             self.pawnPushTable[BLACK][i] = pushes
 
     def computeKingAttackTable(self) -> None:
         for i in range(64):
             bitBoard = setBit(uint64(0), i)
-            moves = (
-                ((bitBoard & ~RANKS[7]) << uint64(8))
-                | ((bitBoard & ~RANKS[0]) >> uint64(8))
-                | ((bitBoard & ~FILE_A) << uint64(1))
-                | ((bitBoard & ~FILE_H) >> uint64(1))
-                | ((bitBoard & ~FILE_A & ~RANKS[7]) << uint64(9))
-                | ((bitBoard & ~FILE_A & ~RANKS[0]) >> uint64(7))
-                | ((bitBoard & ~FILE_H & ~RANKS[0]) >> uint64(9))
-                | ((bitBoard & ~FILE_H & ~RANKS[7]) << uint64(7))
-            )
+            moves = uint64(0)
+            for directionFunction in [
+                north,
+                south,
+                west,
+                east,
+                northwest,
+                northeast,
+                southeast,
+                southwest,
+            ]:
+                moves = moves | directionFunction(bitBoard)
             self.kingAttackTable[i] = moves
