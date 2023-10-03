@@ -1,6 +1,10 @@
 from numpy import uint64
 from numpy.random import randint
 
+##########################
+#   PIECE DEFINITIONS    #
+##########################
+
 WHITE = 0b01000
 BLACK = 0b10000
 
@@ -24,6 +28,9 @@ PIECE_TO_CHARACTER = {
 CHARACTER_TO_PIECE = {v: k for k, v in PIECE_TO_CHARACTER.items()}
 
 
+##########################
+#   PIECE MANIPULATIONS  #
+##########################
 def findPieceColor(piece: int) -> int:
     return piece & 0b11000
 
@@ -50,6 +57,11 @@ def characterToPiece(char: str) -> int:
         return BLACK | CHARACTER_TO_PIECE[char]
 
 
+##########################
+#   PRINT BITBOARDS      #
+##########################
+
+
 def printBitBoard(bitboard: uint64) -> None:
     # prints the bitboard in a readable format for debugging
 
@@ -67,6 +79,10 @@ def printBitBoard(bitboard: uint64) -> None:
     print()
     print()
 
+
+##########################
+#   RANKS AND FILES      #
+##########################
 
 RANK_1 = 0x00000000000000FF
 
@@ -98,6 +114,9 @@ def fileIndexTofileName(file: int) -> str:
     return chr(file + 97)
 
 
+##########################
+#   GRID SQUARES         #
+##########################
 def squareNameToIndex(squareName: str) -> int:
     fileName = squareName[0]
     rankName = squareName[1]
@@ -109,7 +128,9 @@ def squareNameToIndex(squareName: str) -> int:
     return (7 - rankIndex) * 8 + fileIndex
 
 
-# bit board operations
+##########################
+#   BIT BOARD OPERATIONS #
+##########################
 def setBit(bitboard: uint64, index: int) -> uint64:
     return bitboard | uint64(1) << uint64(63 - index)
 
@@ -137,7 +158,9 @@ def popLSB(bitboard: uint64) -> uint64:
     return bitboard & (bitboard - uint64(1))
 
 
-# direction functions
+##########################
+#   DIRECION FUCTIONS    #
+##########################
 DIRECTION_OFFSETS = [-8, 8, -1, 1, -9, 7, -7, 9]
 
 
@@ -173,6 +196,9 @@ def southeast(bitboard: uint64) -> uint64:
     return (bitboard & ~FILE_H) >> uint64(9)
 
 
+##########################
+#   RANDOM GENERATORS    #
+##########################
 def random_uint64() -> uint64:
     return randint(pow(2, 64), dtype=uint64)
 
@@ -181,6 +207,9 @@ def random_uint64_fewbits() -> uint64:
     return random_uint64() & random_uint64() & random_uint64()
 
 
+##########################
+#   MAGIC NUMBERS        #
+##########################
 BMN = [
     9299934476606116096,
     577596067052028160,
