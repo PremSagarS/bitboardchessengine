@@ -4,33 +4,41 @@ from random import randint
 
 class PreComputedTables:
     def __init__(self) -> None:
+        # attack tables for leaping pieces: knights, pawns, kings
         self.knightAttackTable = [uint64(0)] * 64
         self.pawnAttackTable = {WHITE: [uint64(0)] * 64, BLACK: [uint64(0)] * 64}
         self.pawnPushTable = {WHITE: [uint64(0)] * 64, BLACK: [uint64(0)] * 64}
         self.kingAttackTable = [uint64(0)] * 64
-
-        self.numSquaresToEdge = [[] for i in range(64)]
-        self.bishopOccupancyMask = [uint64(0)] * 64
-        self.rookOccupancyMask = [uint64(0)] * 64
-
-        self.bishopMagicNumbers = BISHOP_MAGIC_NUMBERS
-        self.rookMagicNumbers = ROOK_MAGIC_NUMBERS
-
-        self.bishopMagicBitBoards = [[uint64(0)] * 512 for i in range(64)]
-        self.rookMagicBitBoards = [[uint64(0)] * 4096 for i in range(64)]
 
         self.computeKnightAttackTable()
         self.computePawnAttackTable()
         self.computePawnPushTable()
         self.computeKingAttackTable()
 
+        # number of squares to edge in 8 directions for all squares
+        # Will be used in generating legal move generation
+        self.numSquaresToEdge = [[] for i in range(64)]
         self.computeNumSquaresToEdge()
+
+        # Occupancy masks for sliding pieces
+        # Used for magic bitboards
+        # Reference: https://www.chessprogramming.org/Magic_Bitboards
+        self.bishopOccupancyMask = [uint64(0)] * 64
+        self.rookOccupancyMask = [uint64(0)] * 64
         self.computeBishopOccupancyMasks()
         self.computeRookOccupancyMasks()
 
+        # Magic number generation. Can be generated if needed.
+        # Generating magic numbers takes a long time so a list of valid magic numbers
+        # have been saved in the ChessFunctionsAndConstants module
+        self.bishopMagicNumbers = BISHOP_MAGIC_NUMBERS
+        self.rookMagicNumbers = ROOK_MAGIC_NUMBERS
         # self.computeBishopMagicNumbers()
         # self.computeRookMagicNumbers()
 
+        # Generate the magic bitboards
+        self.bishopMagicBitBoards = [[uint64(0)] * 512 for i in range(64)]
+        self.rookMagicBitBoards = [[uint64(0)] * 4096 for i in range(64)]
         self.computeRookMagicBitBoards()
         self.computeBishopMagicBitboards()
 
@@ -163,6 +171,7 @@ class PreComputedTables:
         return occupancy
 
     def bishopMagicFinder(self, sq: int) -> uint64:
+        # Reference: https://www.chessprogramming.org/Looking_for_Magics
         mask = uint64(0)
         b = [uint64(0)] * 4096
         a = [uint64(0)] * 4096
@@ -198,6 +207,7 @@ class PreComputedTables:
         raise Exception("Failed to find magic number")
 
     def rookMagicFinder(self, sq: int) -> uint64:
+        # Reference: https://www.chessprogramming.org/Looking_for_Magics
         mask = uint64(0)
         b = [uint64(0)] * 4096
         a = [uint64(0)] * 4096
