@@ -1,7 +1,5 @@
 from numpy import uint64
 from numpy.random import randint
-from numpy import array
-from numpy import empty, zeros
 
 ##########################
 #   PIECE DEFINITIONS    #
