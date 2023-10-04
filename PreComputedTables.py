@@ -180,7 +180,7 @@ class PreComputedTables:
             i = 0
             fail = 0
             while not fail and i < (1 << n):
-                j = int((b[i] * magic) >> uint64(64 - n))
+                j = self.magicHash(magic, b[i], n)
                 if used[j] == uint64(0):
                     used[j] = a[i]
                 elif used[j] != a[i]:
@@ -214,7 +214,7 @@ class PreComputedTables:
                 )
 
             for i in range(numPatterns):
-                j = int((blockers[i] * magicnumber) >> uint64(64 - n))
+                j = self.magicHash(magicnumber, blockers[i], n)
                 if self.bishopMagicBitBoards[square][j] == uint64(0):
                     self.bishopMagicBitBoards[square][j] = legalMoveMasks[i]
                 elif self.bishopMagicBitBoards[square][j] != legalMoveMasks[i]:
@@ -237,9 +237,32 @@ class PreComputedTables:
                 )
 
             for i in range(numPatterns):
-                j = int((blockers[i] * magicnumber) >> uint64(64 - n))
+                j = self.magicHash(magicnumber, blockers[i], n)
                 if self.rookMagicBitBoards[square][j] == uint64(0):
                     self.rookMagicBitBoards[square][j] = legalMoveMasks[i]
                 elif self.rookMagicBitBoards[square][j] != legalMoveMasks[i]:
-                    print(square, numPatterns, i)
                     raise Exception("Magic number does not work as intended")
+
+    def magicHash(self, magic: uint64, blocker: uint64, n: int) -> int:
+        return int((blocker * magic) >> uint64(64 - n))
+
+    def getBishopAttacks(self, square: int, occupancy: uint64) -> uint64:
+        occupancyMask = self.bishopOccupancyMask[square]
+        n = occupancyMask.bit_count()
+        blockerbb = occupancyMask & occupancy
+        magic = self.bishopMagicNumbers[square]
+        index = self.magicHash(magic, blockerbb, n)
+        return self.bishopMagicBitBoards[square][index]
+
+    def getRookAttacks(self, square: int, occupancy: uint64) -> uint64:
+        occupancyMask = self.rookOccupancyMask[square]
+        n = occupancyMask.bit_count()
+        blockerbb = occupancyMask & occupancy
+        magic = self.rookMagicNumbers[square]
+        index = self.magicHash(magic, blockerbb, n)
+        return self.rookMagicBitBoards[square][index]
+
+    def getQueenAttacks(self, square: int, occupancy: uint64) -> uint64:
+        return self.getBishopAttacks(square, occupancy) | self.getRookAttacks(
+            square, occupancy
+        )

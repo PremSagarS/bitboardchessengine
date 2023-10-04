@@ -1,4 +1,6 @@
 from ChessFunctionsAndConstants import *
+from PreComputedTables import PreComputedTables
+import pickle
 
 
 class Board:
@@ -15,6 +17,12 @@ class Board:
         self.fullMoveCounter = 0
         self.currentTurn = 0
         self.enPassantSquare = None
+
+        try:
+            self.pct: PreComputedTables = pickle.load(open("pctobject", "rb"))
+        except FileNotFoundError:
+            self.pct = PreComputedTables()
+            pickle.dump(self.pct, open("pctobject", "Wb"))
 
         self.setToFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
@@ -92,3 +100,30 @@ class Board:
         for i in range(WHITE | PAWN, WHITE | KING + 1):
             white_bitboard = white_bitboard | self.bitboards[i]
         self.bitboards[WHITE] = white_bitboard
+
+    def isSquareAttackedBy(self, square: int, bySide: int) -> bool:
+        # Reference: https://www.chessprogramming.org/Square_Attacked_By
+        otherSide = (BLACK + WHITE) - bySide
+        occupied = self.bitboards[WHITE] | self.bitboards[BLACK]
+
+        pawns = self.bitboards[bySide | PAWN]
+        if self.pct.pawnAttackTable[otherSide][square] & pawns:
+            return True
+
+        knights = self.bitboards[bySide | KNIGHT]
+        if self.pct.knightAttackTable[square] & knights:
+            return True
+
+        king = self.bitboards[bySide | KING]
+        if self.pct.kingAttackTable[square] & king:
+            return True
+
+        bishopsQueens = self.bitboards[bySide | QUEEN] | self.bitboards[bySide | BISHOP]
+        if self.pct.getBishopAttacks(square, occupied) & bishopsQueens:
+            return True
+
+        rooksQueens = self.bitboards[bySide | QUEEN] | self.bitboards[bySide | BISHOP]
+        if self.pct.getRookAttacks(square, occupied) & rooksQueens:
+            return True
+
+        return False
