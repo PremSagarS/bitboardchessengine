@@ -132,7 +132,7 @@ class Board:
 
         return False
 
-    def generateMoves(self):
+    def generateMoves(self) -> list[Move]:
         move_list = []
         move_list_count = 0
 
@@ -147,9 +147,7 @@ class Board:
                 if piece == WHITE | PAWN:
                     while bitboard:
                         source_square = 63 - getLSBIndex(bitboard)
-                        ssname = squareIndexToSquareName(source_square)
                         target_square = source_square - 8
-                        tsname = squareIndexToSquareName(target_square)
 
                         if not (
                             target_square < 0
@@ -204,7 +202,6 @@ class Board:
                                 # Double push
                                 if source_square > 47 and source_square < 56:
                                     target_square = target_square - 8
-                                    tsname = squareIndexToSquareName(target_square)
                                     if not getBit(self.bitboards[ALL], target_square):
                                         move_list.append(
                                             Move(
@@ -220,7 +217,6 @@ class Board:
 
                         while attacks:
                             target_square = 63 - getLSBIndex(attacks)
-                            tsname = squareIndexToSquareName(target_square)
                             targetPiece = self.board[target_square]
 
                             # Promoting capture
@@ -283,8 +279,7 @@ class Board:
                             ] & setBit(uint64(0), self.enPassantSquare)
                             while enPassantAttacks:
                                 target_square = 63 - getLSBIndex(enPassantAttacks)
-                                tsname = squareIndexToSquareName(target_square)
-                                targetPiece = self.board[target_square]
+                                targetPiece = BLACK | PAWN
                                 move_list.append(
                                     Move(
                                         source_square,
@@ -347,9 +342,7 @@ class Board:
                 if piece == BLACK | PAWN:
                     while bitboard:
                         source_square = 63 - getLSBIndex(bitboard)
-                        ssname = squareIndexToSquareName(source_square)
                         target_square = source_square + 8
-                        tsname = squareIndexToSquareName(target_square)
 
                         if not (
                             target_square < 0
@@ -403,7 +396,6 @@ class Board:
                                 # Double push
                                 if source_square > 7 and source_square < 16:
                                     target_square = target_square + 8
-                                    tsname = squareIndexToSquareName(target_square)
                                     if not getBit(self.bitboards[ALL], target_square):
                                         move_list.append(
                                             Move(
@@ -419,7 +411,6 @@ class Board:
 
                         while attacks:
                             target_square = 63 - getLSBIndex(attacks)
-                            tsname = squareIndexToSquareName(target_square)
 
                             # Promoting capture
                             if source_square > 47 and source_square < 56:
@@ -481,7 +472,7 @@ class Board:
                             ] & setBit(uint64(0), self.enPassantSquare)
                             while enPassantAttacks:
                                 target_square = 63 - getLSBIndex(attacks)
-                                tsname = squareIndexToSquareName(target_square)
+                                targetPiece = WHITE | PAWN
                                 move_list.append(
                                     Move(
                                         source_square,
@@ -543,7 +534,6 @@ class Board:
             if piece == self.currentTurn | KNIGHT:
                 while bitboard:
                     source_square = 63 - getLSBIndex(bitboard)
-                    ssname = squareIndexToSquareName(source_square)
 
                     attacks = self.pct.knightAttackTable[source_square] & ~(
                         self.bitboards[self.currentTurn]
@@ -551,7 +541,6 @@ class Board:
 
                     while attacks:
                         target_square = 63 - getLSBIndex(attacks)
-                        tsname = squareIndexToSquareName(target_square)
 
                         # Capture moves: The moves were filtered not to include same side piece captures
                         # so if the bit of the target square in all occupancies bitboard is set to one
@@ -581,7 +570,6 @@ class Board:
             if piece == self.currentTurn | BISHOP:
                 while bitboard:
                     source_square = 63 - getLSBIndex(bitboard)
-                    ssname = squareIndexToSquareName(source_square)
 
                     attacks = self.pct.getBishopAttacks(
                         source_square, self.bitboards[ALL]
@@ -589,7 +577,6 @@ class Board:
 
                     while attacks:
                         target_square = 63 - getLSBIndex(attacks)
-                        tsname = squareIndexToSquareName(target_square)
 
                         if getBit(self.bitboards[ALL], target_square):
                             targetPiece = self.board[target_square]
@@ -616,7 +603,6 @@ class Board:
             if piece == self.currentTurn | ROOK:
                 while bitboard:
                     source_square = 63 - getLSBIndex(bitboard)
-                    ssname = squareIndexToSquareName(source_square)
 
                     attacks = self.pct.getRookAttacks(
                         source_square, self.bitboards[ALL]
@@ -624,7 +610,6 @@ class Board:
 
                     while attacks:
                         target_square = 63 - getLSBIndex(attacks)
-                        tsname = squareIndexToSquareName(target_square)
 
                         if getBit(self.bitboards[ALL], target_square):
                             targetPiece = self.board[target_square]
@@ -651,7 +636,6 @@ class Board:
             if piece == self.currentTurn | QUEEN:
                 while bitboard:
                     source_square = 63 - getLSBIndex(bitboard)
-                    ssname = squareIndexToSquareName(source_square)
 
                     attacks = self.pct.getQueenAttacks(
                         source_square, self.bitboards[ALL]
@@ -659,7 +643,6 @@ class Board:
 
                     while attacks:
                         target_square = 63 - getLSBIndex(attacks)
-                        tsname = squareIndexToSquareName(target_square)
 
                         if getBit(self.bitboards[ALL], target_square):
                             targetPiece = self.board[target_square]
@@ -686,15 +669,13 @@ class Board:
             if piece == self.currentTurn | KING:
                 while bitboard:
                     source_square = 63 - getLSBIndex(bitboard)
-                    ssname = squareIndexToSquareName(source_square)
 
-                    attacks = self.pct.kingAttackTable[square] & ~(
+                    attacks = self.pct.kingAttackTable[source_square] & ~(
                         self.bitboards[self.currentTurn]
                     )
 
                     while attacks:
                         target_square = 63 - getLSBIndex(attacks)
-                        tsname = squareIndexToSquareName(target_square)
 
                         if getBit(self.bitboards[ALL], target_square):
                             targetPiece = self.board[target_square]
@@ -718,3 +699,66 @@ class Board:
 
                     bitboard = popLSB(bitboard)
         return move_list
+
+    def make_move(self, move: Move):
+        start_square = move.start
+        end_square = move.end
+        piece = move.movingPiece
+        capturedPiece = move.capturedPiece
+
+        self.bitboards[piece] = setBit(self.bitboards[piece], end_square)
+        self.board[start_square] = EMPTY
+        self.bitboards[piece] = clearBit(self.bitboards[piece], start_square)
+        self.board[end_square] = piece
+
+        if move.isMoveCapture():
+            if move.isEnPassant():
+                offshift = 8 if findPieceColor(piece) == WHITE else -8
+                self.board[end_square + offshift] = EMPTY
+                self.bitboards[capturedPiece] = clearBit(
+                    self.bitboards[capturedPiece], end_square + offshift
+                )
+
+            else:
+                self.bitboards[capturedPiece] = clearBit(
+                    self.bitboards[capturedPiece], end_square
+                )
+
+        if move.isPromotion():
+            promotedPiece = move.promotedPiece()
+            self.bitboards[piece] = clearBit(self.bitboards[piece], end_square)
+            self.bitboards[promotedPiece] = clearBit(
+                self.bitboards[promotedPiece], end_square
+            )
+            self.board[end_square] = promotedPiece
+
+    def unmake_move(self, move: Move):
+        start_square = move.start
+        end_square = move.end
+        piece = move.movingPiece
+        capturedPiece = move.capturedPiece
+
+        self.bitboards[piece] = setBit(self.bitboards[piece], start_square)
+        self.board[start_square] = piece
+        self.bitboards[piece] = clearBit(self.bitboards[piece], end_square)
+        self.board[end_square] = capturedPiece
+
+        if move.isMoveCapture():
+            if move.isEnPassant():
+                self.board[end_square] = EMPTY
+                offshift = 8 if findPieceColor(piece) == WHITE else -8
+                self.board[end_square + offshift] = capturedPiece
+                self.bitboards[capturedPiece] = setBit(
+                    self.bitboards[capturedPiece], end_square + offshift
+                )
+
+            else:
+                self.bitboards[capturedPiece] = setBit(
+                    self.bitboards[capturedPiece], end_square
+                )
+
+        if move.isPromotion():
+            promotedPiece = move.promotedPiece()
+            self.bitboards[promotedPiece] = clearBit(
+                self.bitboards[promotedPiece], end_square
+            )
