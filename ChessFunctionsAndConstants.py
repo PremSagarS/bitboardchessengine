@@ -15,6 +15,13 @@ ROOK = 0b00100
 QUEEN = 0b00101
 KING = 0b00110
 
+ALL = 0b00001
+
+PIECES = [PAWN, BISHOP, KNIGHT, ROOK, QUEEN, KING]
+WHITE_PIECES = [WHITE | piece for piece in PIECES]
+BLACK_PIECES = [BLACK | piece for piece in PIECES]
+ALL_PIECES = WHITE_PIECES + BLACK_PIECES
+
 EMPTY = 0b00000
 
 PIECE_TO_CHARACTER = {
@@ -128,6 +135,12 @@ def squareNameToIndex(squareName: str) -> int:
     return (7 - rankIndex) * 8 + fileIndex
 
 
+def squareIndexToSquareName(index: int) -> str:
+    rank = index // 8
+    file = index % 8
+    return fileIndexTofileName(file) + rankIndexToRankName(7 - rank)
+
+
 ##########################
 #   BIT BOARD OPERATIONS #
 ##########################
@@ -154,7 +167,8 @@ def getLSBIndex(bitboard: uint64) -> int:
 
 
 def popLSB(bitboard: uint64) -> uint64:
-    idx = getLSBIndex(bitboard)
+    if getLSBIndex(bitboard) == 64:
+        return uint64(0)
     return bitboard & (bitboard - uint64(1))
 
 
@@ -347,3 +361,48 @@ RMN = [
 ]
 
 ROOK_MAGIC_NUMBERS = [uint64(i) for i in RMN]
+
+##########################
+#   TEST FENS            #
+##########################
+
+INITIAL_POSITION_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+CASTLING_TEST_FEN = (
+    "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
+)
+
+##########################
+#   CASTLING CONSTS      #
+##########################
+
+WKINDEX = 0
+WQINDEX = 1
+BKINDEX = 2
+BQINDEX = 3
+
+WKEMPTYBB = uint64(6)
+WQEMPTYBB = uint64(112)
+BKEMPTYBB = uint64(432345564227567616)
+BQEMPTYBB = uint64(8070450532247928832)
+
+# King cannot castle if the king itself is under attack
+WKATTACKSQUARES = [
+    squareNameToIndex("f1"),
+    squareNameToIndex("g1"),
+    squareNameToIndex("e1"),
+]
+WQATTACKSQUARES = [
+    squareNameToIndex("c1"),
+    squareNameToIndex("d1"),
+    squareNameToIndex("e1"),
+]
+BKATTACKSQUARES = [
+    squareNameToIndex("f8"),
+    squareNameToIndex("g8"),
+    squareNameToIndex("e8"),
+]
+BQATTACKSQUARES = [
+    squareNameToIndex("c8"),
+    squareNameToIndex("d8"),
+    squareNameToIndex("e8"),
+]
