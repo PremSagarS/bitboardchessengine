@@ -53,14 +53,14 @@ class PreComputedTables:
             self.knightAttackTable[i] = attacks
 
     def computePawnTable(self) -> None:
-        for i in range(8, 56):
+        for i in range(64):
             bitBoard = setBit(uint64(0), i)
             attacks = northeast(bitBoard) | northwest(bitBoard)
             pushes = north(bitBoard)
             self.pawnPushTable[WHITE][i] = pushes
             self.pawnAttackTable[WHITE][i] = attacks
 
-        for i in range(8, 56):
+        for i in range(64):
             bitBoard = setBit(uint64(0), i)
             attacks = southeast(bitBoard) | southwest(bitBoard)
             pushes = south(bitBoard)

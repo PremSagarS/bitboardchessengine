@@ -42,17 +42,18 @@ class Move:
         return self.flag & self.capture
 
     def promotedPiece(self) -> int:
-        if self.flag == self.nPromo:
-            return KNIGHT
+        color = findPieceColor(self.movingPiece)
+        if self.flag == self.nPromo or self.flag == self.nPromoCapture:
+            return color | KNIGHT
 
-        elif self.flag == self.bPromo:
-            return BISHOP
+        elif self.flag == self.bPromo or self.flag == self.bPromoCapture:
+            return color | BISHOP
 
-        elif self.flag == self.rPromo:
-            return ROOK
+        elif self.flag == self.rPromo or self.flag == self.rPromoCapture:
+            return color | ROOK
 
-        elif self.flag == self.qPromo:
-            return QUEEN
+        elif self.flag == self.qPromo or self.flag == self.qPromoCapture:
+            return color | QUEEN
 
         else:
             return EMPTY
@@ -75,6 +76,6 @@ class Move:
         if not self.isPromotion():
             return startSquare + endSquare
         promotedPieceText = {KNIGHT: "n", QUEEN: "q", BISHOP: "b", ROOK: "r"}[
-            self.promotedPiece()
+            findPieceType(self.promotedPiece())
         ]
         return startSquare + endSquare + promotedPieceText

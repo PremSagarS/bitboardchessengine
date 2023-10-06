@@ -493,7 +493,7 @@ class Board:
                                 source_square
                             ] & setBit(uint64(0), self.enPassantSquare)
                             while enPassantAttacks:
-                                target_square = 63 - getLSBIndex(attacks)
+                                target_square = 63 - getLSBIndex(enPassantAttacks)
                                 targetPiece = WHITE | PAWN
                                 move_list.append(
                                     Move(
@@ -757,7 +757,7 @@ class Board:
         if move.isPromotion():
             promotedPiece = move.promotedPiece()
             self.bitboards[piece] = clearBit(self.bitboards[piece], end_square)
-            self.bitboards[promotedPiece] = clearBit(
+            self.bitboards[promotedPiece] = setBit(
                 self.bitboards[promotedPiece], end_square
             )
             self.board[end_square] = promotedPiece
