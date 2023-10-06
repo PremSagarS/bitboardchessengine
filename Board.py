@@ -28,7 +28,7 @@ class Board:
             self.pct: PreComputedTables = pickle.load(open("pctobject", "rb"))
         except FileNotFoundError:
             self.pct = PreComputedTables()
-            pickle.dump(self.pct, open("pctobject", "Wb"))
+            pickle.dump(self.pct, open("pctobject", "wb"))
 
         self.setToFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
