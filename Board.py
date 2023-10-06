@@ -19,6 +19,11 @@ class Board:
         self.currentTurn = 0
         self.enPassantSquare = None
 
+        self.enPassantStack = []
+        self.castlingRightsStack = []
+        self.halfMoveCounterStack = []
+        self.moveStack = []
+
         try:
             self.pct: PreComputedTables = pickle.load(open("pctobject", "rb"))
         except FileNotFoundError:
@@ -37,6 +42,19 @@ class Board:
                 print("")
                 print("  " + ("-" * 33))
         print("    a   b   c   d   e   f   g   h")
+        print()
+        print(
+            "En Passant Square: "
+            + (
+                squareIndexToSquareName(self.enPassantSquare)
+                if self.enPassantSquare
+                else "-"
+            )
+        )
+        print(f"Castling rights: {self.castlingRights}")
+        print(f"Halfmove counter: {self.halfMoveCounter}")
+        print(f"Fullmove counter: {self.fullMoveCounter}")
+        print(f"To move: {'white' if self.currentTurn == WHITE else 'black'}")
 
     def setToFen(self, fen: str) -> None:
         # get info from FEN
@@ -93,6 +111,9 @@ class Board:
             pieceBitBoard = self.bitboards[piece]
             self.bitboards[piece] = setBit(pieceBitBoard, squareIndex)
 
+        self.updateOccupancyBitBoards()
+
+    def updateOccupancyBitBoards(self) -> None:
         black_bitboard = uint64(0)
         for i in range(BLACK | PAWN, BLACK | KING + 1):
             black_bitboard = black_bitboard | self.bitboards[i]
@@ -126,7 +147,7 @@ class Board:
         if self.pct.getBishopAttacks(square, occupied) & bishopsQueens:
             return True
 
-        rooksQueens = self.bitboards[bySide | QUEEN] | self.bitboards[bySide | BISHOP]
+        rooksQueens = self.bitboards[bySide | QUEEN] | self.bitboards[bySide | ROOK]
         if self.pct.getRookAttacks(square, occupied) & rooksQueens:
             return True
 
@@ -309,7 +330,7 @@ class Board:
                         if canCastle:
                             move_list.append(
                                 Move(
-                                    source_square,
+                                    squareNameToIndex("e1"),
                                     squareNameToIndex("g1"),
                                     Move.kingCastle,
                                     piece,
@@ -330,7 +351,7 @@ class Board:
                         if canCastle:
                             move_list.append(
                                 Move(
-                                    source_square,
+                                    squareNameToIndex("e1"),
                                     squareNameToIndex("c1"),
                                     Move.queenCastle,
                                     piece,
@@ -411,6 +432,7 @@ class Board:
 
                         while attacks:
                             target_square = 63 - getLSBIndex(attacks)
+                            targetPiece = self.board[target_square]
 
                             # Promoting capture
                             if source_square > 47 and source_square < 56:
@@ -503,7 +525,7 @@ class Board:
                         if canCastle:
                             move_list.append(
                                 Move(
-                                    source_square,
+                                    squareNameToIndex("e8"),
                                     squareNameToIndex("g8"),
                                     Move.kingCastle,
                                     piece,
@@ -524,7 +546,7 @@ class Board:
                         if canCastle:
                             move_list.append(
                                 Move(
-                                    source_square,
+                                    squareNameToIndex("e8"),
                                     squareNameToIndex("c8"),
                                     Move.queenCastle,
                                     piece,
@@ -711,6 +733,14 @@ class Board:
         self.bitboards[piece] = clearBit(self.bitboards[piece], start_square)
         self.board[end_square] = piece
 
+        self.enPassantStack.append(self.enPassantSquare)
+
+        if move.isDoublePush():
+            offset = 8 if self.currentTurn == WHITE else -8
+            self.enPassantSquare = end_square + offset
+        else:
+            self.enPassantSquare = None
+
         if move.isMoveCapture():
             if move.isEnPassant():
                 offshift = 8 if findPieceColor(piece) == WHITE else -8
@@ -732,7 +762,81 @@ class Board:
             )
             self.board[end_square] = promotedPiece
 
-    def unmake_move(self, move: Move):
+        if move.isCastling():
+            if self.currentTurn == WHITE:
+                rook = WHITE | ROOK
+                if move.flag == Move.kingCastle:
+                    rookStart = squareNameToIndex("h1")
+                    rookEnd = squareNameToIndex("f1")
+                else:
+                    rookStart = squareNameToIndex("a1")
+                    rookEnd = squareNameToIndex("d1")
+                self.bitboards[rook] = clearBit(self.bitboards[rook], rookStart)
+                self.bitboards[rook] = setBit(self.bitboards[rook], rookEnd)
+                self.board[rookStart] = EMPTY
+                self.board[rookEnd] = rook
+
+            if self.currentTurn == BLACK:
+                rook = BLACK | ROOK
+                if move.flag == Move.kingCastle:
+                    rookStart = squareNameToIndex("h8")
+                    rookEnd = squareNameToIndex("f8")
+                else:
+                    rookStart = squareNameToIndex("a8")
+                    rookEnd = squareNameToIndex("d8")
+                self.bitboards[rook] = clearBit(self.bitboards[rook], rookStart)
+                self.bitboards[rook] = setBit(self.bitboards[rook], rookEnd)
+                self.board[rookStart] = EMPTY
+                self.board[rookEnd] = rook
+
+        self.castlingRightsStack.append([right for right in self.castlingRights])
+
+        if findPieceType(move.movingPiece) == KING:
+            if self.currentTurn == WHITE:
+                self.castlingRights[0] = False
+                self.castlingRights[1] = False
+            elif self.currentTurn == BLACK:
+                self.castlingRights[2] = False
+                self.castlingRights[3] = False
+
+        if findPieceType(move.movingPiece) == ROOK:
+            if start_square == squareNameToIndex("h1"):
+                self.castlingRights[0] = False
+            elif start_square == squareNameToIndex("a1"):
+                self.castlingRights[1] = False
+            elif start_square == squareNameToIndex("h8"):
+                self.castlingRights[2] = False
+            elif start_square == squareNameToIndex("a8"):
+                self.castlingRights[3] = False
+
+        if findPieceType(move.capturedPiece) == ROOK:
+            if end_square == squareNameToIndex("h1"):
+                self.castlingRights[0] = False
+            elif end_square == squareNameToIndex("a1"):
+                self.castlingRights[1] = False
+            elif end_square == squareNameToIndex("h8"):
+                self.castlingRights[2] = False
+            elif end_square == squareNameToIndex("a8"):
+                self.castlingRights[3]
+
+        self.updateOccupancyBitBoards()
+
+        self.halfMoveCounterStack.append(self.halfMoveCounter)
+        if findPieceType(move.movingPiece) == PAWN or move.isMoveCapture():
+            self.halfMoveCounter = 0
+        else:
+            self.halfMoveCounter += 1
+
+        if self.currentTurn == BLACK:
+            self.fullMoveCounter += 1
+
+        self.currentTurn = (BLACK + WHITE) - self.currentTurn
+
+        self.moveStack.append(move)
+
+    def unmake_move(self) -> None:
+        move = self.moveStack.pop()
+
         start_square = move.start
         end_square = move.end
         piece = move.movingPiece
@@ -762,3 +866,88 @@ class Board:
             self.bitboards[promotedPiece] = clearBit(
                 self.bitboards[promotedPiece], end_square
             )
+
+        self.enPassantSquare = self.enPassantStack.pop()
+
+        if move.isCastling():
+            turn = findPieceColor(move.movingPiece)
+            if turn == WHITE:
+                rook = WHITE | ROOK
+                if move.flag == Move.kingCastle:
+                    rookStart = squareNameToIndex("h1")
+                    rookEnd = squareNameToIndex("f1")
+                else:
+                    rookStart = squareNameToIndex("a1")
+                    rookEnd = squareNameToIndex("d1")
+                self.bitboards[rook] = setBit(self.bitboards[rook], rookStart)
+                self.bitboards[rook] = clearBit(self.bitboards[rook], rookEnd)
+                self.board[rookStart] = rook
+                self.board[rookEnd] = EMPTY
+
+            if turn:
+                rook = BLACK | ROOK
+                if move.flag == Move.kingCastle:
+                    rookStart = squareNameToIndex("h8")
+                    rookEnd = squareNameToIndex("f8")
+                else:
+                    rookStart = squareNameToIndex("a8")
+                    rookEnd = squareNameToIndex("d8")
+                self.bitboards[rook] = setBit(self.bitboards[rook], rookStart)
+                self.bitboards[rook] = clearBit(self.bitboards[rook], rookEnd)
+                self.board[rookStart] = EMPTY
+                self.board[rookEnd] = rook
+
+        self.castlingRights = self.castlingRightsStack.pop()
+
+        self.updateOccupancyBitBoards()
+
+        self.halfMoveCounter = self.halfMoveCounterStack.pop()
+
+        if findPieceColor(move.movingPiece) == BLACK:
+            self.fullMoveCounter -= 1
+
+        self.currentTurn = (BLACK + WHITE) - self.currentTurn
+
+    def legalMoves(self) -> list[Move]:
+        plmoves = self.generateMoves()
+        lmoves = []
+        for move in plmoves:
+            self.make_move(move)
+            if self.kingCanBeCaptured():
+                self.unmake_move()
+                continue
+            lmoves.append(move)
+            self.unmake_move()
+        return lmoves
+
+    def kingCanBeCaptured(self) -> bool:
+        k = BLACK | KING
+        K = WHITE | KING
+        kingSquare = 63 - getLSBIndex(
+            self.bitboards[k if self.currentTurn == WHITE else K]
+        )
+        return self.isSquareAttackedBy(kingSquare, self.currentTurn)
+
+    def perft(self, depth: int) -> int:
+        if depth == 0:
+            return 1
+
+        nodes = 0
+
+        moves = self.generateMoves()
+        for move in moves:
+            self.make_move(move)
+            if not self.kingCanBeCaptured():
+                nodes += self.perft(depth - 1)
+            self.unmake_move()
+        return nodes
+
+    def divide(self, depth: int) -> None:
+        if depth == 0:
+            raise "depth must be greater than 1 when calling divide"
+
+        moves = self.legalMoves()
+        for move in moves:
+            self.make_move(move)
+            print(f"{move}: {self.perft(depth - 1)}")
+            self.unmake_move()

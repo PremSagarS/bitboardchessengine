@@ -60,7 +60,7 @@ class Move:
     def isEnPassant(self) -> bool:
         return self.flag == self.epCapture
 
-    def isDoublePus(self) -> bool:
+    def isDoublePush(self) -> bool:
         return self.doublePawnPush == self.flag
 
     def isPromotion(self) -> bool:
