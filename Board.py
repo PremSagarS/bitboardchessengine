@@ -985,12 +985,13 @@ class Board:
     ) -> float:
         if depth == 0:
             self.evaluatedCount += 1
-            return self.evaluate()
+            return self.quiesce(alpha, beta, 2)
 
         if setBestMove:
             self.evaluatedCount = 0
 
         moves = self.legalMoves()
+        moves.sort(key=self.move_value, reverse=True)
 
         if moves == []:
             if self.isInCheck():
@@ -999,8 +1000,6 @@ class Board:
                 return 0
 
         for move in moves:
-            if setBestMove:
-                pass
             self.make_move(move)
             evaluation = -self.search(depth - 1, False, -beta, -alpha)
             self.unmake_move()
@@ -1011,5 +1010,53 @@ class Board:
             if alpha < evaluation and setBestMove:
                 self.bestMove = move
             alpha = max(alpha, evaluation)
+
+        return alpha
+
+    def move_value(self, move: Move) -> int:
+        value = 0
+        capturedPieceType = findPieceType(move.capturedPiece)
+        movingPieceType = findPieceType(move.movingPiece)
+        dest = move.end
+        self.make_move(move)
+        if self.isInCheck():
+            value += 2000
+        if move.capturedPiece != EMPTY:
+            if movingPieceType == KING:
+                value += MATERIALSCORETABLE[capturedPieceType]
+            else:
+                value += MATERIALSCORETABLE[movingPieceType] - (
+                    MATERIALSCORETABLE[capturedPieceType]
+                    if self.isSquareAttackedBy(dest, self.currentTurn)
+                    else 0
+                )
+        self.unmake_move()
+
+        return value
+
+    def quiesce(self, alpha: int, beta: int, max_depth: int):
+        stand_pat = self.evaluate()
+        if max_depth == 0:
+            return stand_pat
+
+        if stand_pat >= beta:
+            return beta
+        if alpha < stand_pat:
+            alpha = stand_pat
+
+        moves = self.legalMoves()
+
+        for move in moves:
+            if not move.isMoveCapture():
+                continue
+
+            self.make_move(move)
+            score = -self.quiesce(-beta, -alpha, max_depth - 1)
+            self.unmake_move()
+
+            if score >= beta:
+                return beta
+            if score > alpha:
+                alpha = score
 
         return alpha
