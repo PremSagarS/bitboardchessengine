@@ -24,6 +24,8 @@ class Board:
         self.halfMoveCounterStack = []
         self.moveStack = []
 
+        self.bestMove = None
+
         try:
             self.pct: PreComputedTables = pickle.load(open("pctobject", "rb"))
         except FileNotFoundError:
@@ -951,3 +953,70 @@ class Board:
             self.make_move(move)
             print(f"{move}: {self.perft(depth - 1)}")
             self.unmake_move()
+
+    def evaluate(self) -> int:
+        score = 0
+
+        for piece in BLACK_PIECES:
+            score -= (
+                self.bitboards[piece].bit_count()
+                * MATERIALSCORETABLE[findPieceType(piece)]
+            )
+
+            bitboard = self.bitboards[piece]
+            pieceType = findPieceType(piece)
+
+            while bitboard:
+                square = 63 - getLSBIndex(bitboard)
+                pieceType = findPieceType(piece)
+                score -= PIECESQUARESCORES[pieceType][
+                    PIECESQUARESCORESINDEX[BLACK][square]
+                ]
+
+                bitboard = popLSB(bitboard)
+
+        for piece in WHITE_PIECES:
+            score += (
+                self.bitboards[piece].bit_count()
+                * MATERIALSCORETABLE[findPieceType(piece)]
+            )
+
+            bitboard = self.bitboards[piece]
+            pieceType = findPieceType(piece)
+
+            while bitboard:
+                square = 63 - getLSBIndex(bitboard)
+                pieceType = findPieceType(piece)
+                score += PIECESQUARESCORES[pieceType][
+                    PIECESQUARESCORESINDEX[WHITE][square]
+                ]
+
+                bitboard = popLSB(bitboard)
+
+        return score if self.currentTurn == WHITE else -score
+
+    def alphabeta(self, alpha: int, beta: int, depth: int, root: bool = False) -> None:
+        if depth == 0:
+            return self.evaluate()
+
+        moves = self.generateMoves()
+
+        best_sofar: Move = None
+
+        for move in moves:
+            self.make_move(move)
+            if self.kingCanBeCaptured():
+                self.unmake_move()
+                continue
+
+            score = -self.alphabeta(-beta, -alpha, depth - 1)
+            self.unmake_move()
+            if score >= beta:
+                return beta
+            if score > alpha:
+                alpha = score
+                best_sofar = move
+
+        if root:
+            self.bestMove = best_sofar
+        return alpha
