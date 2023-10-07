@@ -25,6 +25,7 @@ class Board:
         self.moveStack = []
 
         self.bestMove = None
+        self.evaluatedCount = 0
 
         try:
             self.pct: PreComputedTables = pickle.load(open("pctobject", "rb"))
@@ -957,66 +958,58 @@ class Board:
     def evaluate(self) -> int:
         score = 0
 
-        for piece in BLACK_PIECES:
-            score -= (
-                self.bitboards[piece].bit_count()
-                * MATERIALSCORETABLE[findPieceType(piece)]
-            )
-
-            bitboard = self.bitboards[piece]
+        for i in range(64):
+            piece = self.board[i]
+            if piece == EMPTY:
+                continue
+            pieceColor = findPieceColor(piece)
             pieceType = findPieceType(piece)
 
-            while bitboard:
-                square = 63 - getLSBIndex(bitboard)
-                pieceType = findPieceType(piece)
-                score -= PIECESQUARESCORES[pieceType][
-                    PIECESQUARESCORESINDEX[BLACK][square]
-                ]
+            if pieceColor == BLACK:
+                score -= MATERIALSCORETABLE[pieceType]
+                score -= PIECESQUARESCORES[pieceType][PIECESQUARESCORESINDEX[BLACK][i]]
 
-                bitboard = popLSB(bitboard)
-
-        for piece in WHITE_PIECES:
-            score += (
-                self.bitboards[piece].bit_count()
-                * MATERIALSCORETABLE[findPieceType(piece)]
-            )
-
-            bitboard = self.bitboards[piece]
-            pieceType = findPieceType(piece)
-
-            while bitboard:
-                square = 63 - getLSBIndex(bitboard)
-                pieceType = findPieceType(piece)
-                score += PIECESQUARESCORES[pieceType][
-                    PIECESQUARESCORESINDEX[WHITE][square]
-                ]
-
-                bitboard = popLSB(bitboard)
+            if pieceColor == WHITE:
+                score += MATERIALSCORETABLE[pieceType]
+                score += PIECESQUARESCORES[pieceType][PIECESQUARESCORESINDEX[WHITE][i]]
 
         return score if self.currentTurn == WHITE else -score
 
-    def alphabeta(self, alpha: int, beta: int, depth: int, root: bool = False) -> None:
+    def isInCheck(self) -> bool:
+        kingSquare = 63 - getLSBIndex(self.bitboards[self.currentTurn | KING])
+        otherSide = (BLACK + WHITE) - self.currentTurn
+        return self.isSquareAttackedBy(kingSquare, otherSide)
+
+    def search(
+        self, depth: int, setBestMove: bool, alpha=float("-inf"), beta=float("inf")
+    ) -> float:
         if depth == 0:
+            self.evaluatedCount += 1
             return self.evaluate()
 
-        moves = self.generateMoves()
+        if setBestMove:
+            self.evaluatedCount = 0
 
-        best_sofar: Move = None
+        moves = self.legalMoves()
+
+        if moves == []:
+            if self.isInCheck():
+                return float("-inf")
+            else:
+                return 0
 
         for move in moves:
+            if setBestMove:
+                pass
             self.make_move(move)
-            if self.kingCanBeCaptured():
-                self.unmake_move()
-                continue
-
-            score = -self.alphabeta(-beta, -alpha, depth - 1)
+            evaluation = -self.search(depth - 1, False, -beta, -alpha)
             self.unmake_move()
-            if score >= beta:
+            if evaluation >= beta:
+                if setBestMove:
+                    self.bestMove = move
                 return beta
-            if score > alpha:
-                alpha = score
-                best_sofar = move
+            if alpha < evaluation and setBestMove:
+                self.bestMove = move
+            alpha = max(alpha, evaluation)
 
-        if root:
-            self.bestMove = best_sofar
         return alpha
