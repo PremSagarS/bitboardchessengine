@@ -887,7 +887,7 @@ class Board:
                 self.board[rookStart] = rook
                 self.board[rookEnd] = EMPTY
 
-            if turn:
+            if turn == BLACK:
                 rook = BLACK | ROOK
                 if move.flag == Move.kingCastle:
                     rookStart = squareNameToIndex("h8")
@@ -1007,7 +1007,7 @@ class Board:
                 if setBestMove:
                     self.bestMove = move
                 return beta
-            if alpha < evaluation and setBestMove:
+            if alpha <= evaluation and setBestMove:
                 self.bestMove = move
             alpha = max(alpha, evaluation)
 
