@@ -36,6 +36,7 @@ class DisplayModule:
         text_mod=pygame.font.Font(None,40)
         movstate=1
         valid=[]
+        status=0
         while True:
             
             for x in range(64):
@@ -43,37 +44,63 @@ class DisplayModule:
                     pygame.draw.rect(surface,'burlywood2',pygame.Rect(100+50*(x%8),100+50*(x//8),50,50))
                 else:
                     pygame.draw.rect(surface,'burlywood4',pygame.Rect(100+50*(x%8),100+50*(x//8),50,50))
+            for move in valid:
+                p=self.cord_to_pos(move)
+                #pygame.draw.rect(surface,'red',pygame.Rect(p[0],p[1],50,50))
+                pygame.draw.circle(surface,'red',(p[0]+25,p[1]+25),10)
             events=pygame.event.get()
+            m=self.board.legalMoves()
+            screen.blit(surface,(0,0))
+            if len(m)==0:
+                text=text_mod.render(f"""BLACK WINS!!!""",0,(255,255,255))
+                pos=(70,550)
+                screen.blit(text,pos)
+                valid=[]
+                status=1
             for event in events:
                 if event.type==pygame.QUIT:
                     pygame.quit()
                     exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    m=self.board.legalMoves()
-                    pos=pygame.mouse.get_pos()
-                    pos=self.pos_to_cord(pos)
-                    if movstate==1:
-                        for mov in m:
-                            if mov.start==pos:
-                                valid.append(mov)
-                        if valid!=[]:
-                            movstate=2
-                    elif movstate==2:
-                        newvalid=[]
-                        for mov in valid:
-                            if mov.end==pos:
-                                newvalid.append(mov)
-                        valid=newvalid
-                        if valid==[]:
-                            movstate=1
-                        if valid!=[]:
-                            self.board.make_move(valid[0])
-                            valid=[]
-                            movstate=1
-                            self.board.search(3,True)
-                            self.board.make_move(self.board.bestMove)
-            screen.blit(surface,(0,0))
+                    if status==1:
+                        continue
+                    else:
+                        pos=pygame.mouse.get_pos()
+                        if pos[0]>500 or pos[1]>500:
+                            continue
+                        pos=self.pos_to_cord(pos)
+
+                        if movstate==1:
+                            for mov in m:
+                                if mov.start==pos:
+                                    valid.append(mov)
+                            if valid!=[]:
+                                movstate=2
+                        elif movstate==2:
+                            newvalid=[]
+                            for mov in valid:
+                                if mov.end==pos:
+                                    newvalid.append(mov)
+                            valid=newvalid
+                            if valid==[]:
+                                movstate=1
+                            if valid!=[]:
+                                self.board.make_move(valid[0])
+                                valid=[]
+                                movstate=1
+                                self.board.search(3,True)
+                                if self.board.bestMove==None:
+                                    text=text_mod.render(f"""WHITE WINS!!!""",0,(255,255,255))
+                                    pos=(70,550)
+                                    screen.blit(text,pos)
+                                    valid=[]
+                                    status=1
+                                else:
+                                    self.board.make_move(self.board.bestMove)
+            
+            
             text=text_mod.render(f"""{"WHITE" if self.board.currentTurn==WHITE else "BLACK"} TO MOVE""",0,(255,255,255))
+            
             pos=(100,70)
             screen.blit(text,pos)
             for n in range(8,0,-1):
@@ -83,10 +110,8 @@ class DisplayModule:
             text=text_mod.render("a    b    c    d     e    f     g    h",0,(255,255,255))
             pos=(120,510)
             screen.blit(text,pos)
-            for move in valid:
-                p=self.cord_to_pos(move)
-                pygame.draw.rect(surface,'red',pygame.Rect(p[0],p[1],50,50))
             self.draw_peices()
+            
             pygame.display.update()
             clock.tick(60)
 
