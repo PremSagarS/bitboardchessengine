@@ -1007,7 +1007,7 @@ class Board:
                 if setBestMove:
                     self.bestMove = move
                 return beta
-            if alpha <= evaluation and setBestMove:
+            if alpha < evaluation and setBestMove:
                 self.bestMove = move
             alpha = max(alpha, evaluation)
 
